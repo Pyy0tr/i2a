@@ -2,7 +2,7 @@ PREFIX ?= /usr/local
 BINDIR  = $(PREFIX)/bin
 
 install: install-deps
-	install -Dm755 i2a $(DESTDIR)$(BINDIR)/i2a
+	install -Dm755 img2term $(DESTDIR)$(BINDIR)/img2term
 
 install-deps:
 	@if command -v pacman >/dev/null 2>&1; then \
@@ -18,6 +18,6 @@ install-deps:
 	fi
 
 uninstall:
-	rm -f $(DESTDIR)$(BINDIR)/i2a
+	rm -f $(DESTDIR)$(BINDIR)/img2term
 
 .PHONY: install install-deps uninstall

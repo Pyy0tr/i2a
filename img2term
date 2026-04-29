@@ -17,7 +17,7 @@ RENDERER="ascii"
 INPUT=""
 
 # --- helpers ---
-die() { echo "i2a: error: $*" >&2; exit 1; }
+die() { echo "img2term: error: $*" >&2; exit 1; }
 
 check_deps() {
     command -v magick >/dev/null 2>&1 || die "imagemagick not found (pacman -S imagemagick)"
@@ -30,7 +30,7 @@ check_deps() {
 
 usage() {
     cat <<EOF
-Usage: i2a <image> [options]
+Usage: img2term <image> [options]
 
 Options:
   --output=FILE         save ASCII art to file
@@ -60,7 +60,7 @@ for arg in "$@"; do
         --prop=*)      PROP="${arg#*=}" ;;
         --renderer=*)  RENDERER="${arg#*=}" ;;
         -h|--help)     usage; exit 0 ;;
-        --version)     echo "i2a $VERSION"; exit 0 ;;
+        --version)     echo "img2term $VERSION"; exit 0 ;;
         -*)            die "unknown option: $arg" ;;
         *)             INPUT="$arg" ;;
     esac
