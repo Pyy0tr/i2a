@@ -1,0 +1,12 @@
+# test images
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.gif
+
+# generated ASCII output
+*.txt
+
+# system
+.DS_Store

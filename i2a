@@ -1,0 +1,112 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# --- version ---
+VERSION="0.1.0"
+
+# --- defaults ---
+FUZZ=5
+BG_COLOR="auto"
+COLOR_MODE="24bit"
+WIDTH=""
+HEIGHT=""
+OUTPUT=""
+PREVIEW=false
+INPUT=""
+
+# --- helpers ---
+die() { echo "i2a: error: $*" >&2; exit 1; }
+
+check_deps() {
+    command -v magick  >/dev/null 2>&1 || die "imagemagick not found (pacman -S imagemagick)"
+    command -v jp2a    >/dev/null 2>&1 || die "jp2a not found (pacman -S jp2a)"
+}
+
+usage() {
+    cat <<EOF
+Usage: i2a <image> [options]
+
+Options:
+  --output=FILE         save ASCII art to file
+  --preview=true        print ASCII art in terminal (default: false)
+  --width=N             width in columns
+  --height=N            height in lines
+  --color-mode=MODE     24bit | 8bit | bw  (default: 24bit)
+  --bg-color=COLOR      auto | #rrggbb | white | black  (default: auto)
+  --fuzz=N              background removal tolerance in %  (default: 5)
+  --version             show version
+  -h, --help            show this help
+EOF
+}
+
+# --- argument parsing ---
+for arg in "$@"; do
+    case "$arg" in
+        --output=*)    OUTPUT="${arg#*=}" ;;
+        --width=*)     WIDTH="${arg#*=}" ;;
+        --height=*)    HEIGHT="${arg#*=}" ;;
+        --color-mode=*)COLOR_MODE="${arg#*=}" ;;
+        --bg-color=*)  BG_COLOR="${arg#*=}" ;;
+        --fuzz=*)      FUZZ="${arg#*=}" ;;
+        --preview=*)   PREVIEW="${arg#*=}" ;;
+        -h|--help)     usage; exit 0 ;;
+        --version)     echo "i2a $VERSION"; exit 0 ;;
+        -*)            die "unknown option: $arg" ;;
+        *)             INPUT="$arg" ;;
+    esac
+done
+
+# --- validation ---
+check_deps
+[[ -z "$INPUT" ]]      && die "no input file specified. Use: i2a <image> [options]"
+[[ ! -f "$INPUT" ]]    && die "file not found: $INPUT"
+
+case "$COLOR_MODE" in
+    24bit|8bit|bw) ;;
+    *) die "invalid --color-mode: $COLOR_MODE (use 24bit, 8bit or bw)" ;;
+esac
+
+case "$PREVIEW" in
+    true|false) ;;
+    *) die "invalid --preview: $PREVIEW (use true or false)" ;;
+esac
+
+[[ -z "$OUTPUT" && "$PREVIEW" != "true" ]] && die "nothing to do: use --output=FILE and/or --preview=true"
+
+# --- background color detection ---
+if [[ "$BG_COLOR" == "auto" ]]; then
+    BG_COLOR=$(magick identify -format "%[pixel:u.p{0,0}]" "$INPUT" 2>/dev/null) \
+        || die "could not read pixel color from $INPUT"
+fi
+
+# --- tmp file ---
+TMP=$(mktemp /tmp/i2a_XXXXXX.png)
+trap 'rm -f "$TMP"' EXIT
+
+# --- step 1: remove background with magick ---
+magick "$INPUT" \
+    -fuzz "${FUZZ}%" \
+    -transparent "$BG_COLOR" \
+    "$TMP" \
+    || die "magick failed to process $INPUT"
+
+# --- step 2: build jp2a args ---
+JP2A_ARGS=()
+
+case "$COLOR_MODE" in
+    24bit) JP2A_ARGS+=(--colors) ;;
+    8bit)  JP2A_ARGS+=(--colors) ;;  # jp2a uses terminal colors in both cases
+    bw)    ;;
+esac
+
+[[ -n "$WIDTH" ]]  && JP2A_ARGS+=(--width="$WIDTH")
+[[ -n "$HEIGHT" ]] && JP2A_ARGS+=(--height="$HEIGHT")
+
+# --- step 3: convert to ASCII ---
+if [[ -n "$OUTPUT" && "$PREVIEW" == "true" ]]; then
+    jp2a "${JP2A_ARGS[@]}" "$TMP" | tee "$OUTPUT" || die "jp2a failed"
+elif [[ -n "$OUTPUT" ]]; then
+    jp2a "${JP2A_ARGS[@]}" --output="$OUTPUT" "$TMP" || die "jp2a failed"
+else
+    jp2a "${JP2A_ARGS[@]}" "$TMP" || die "jp2a failed"
+fi
