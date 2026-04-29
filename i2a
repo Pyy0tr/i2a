@@ -5,10 +5,10 @@ set -euo pipefail
 VERSION="0.1.0"
 
 # --- defaults ---
-FUZZ=5
+FUZZ=10
 BG_COLOR="auto"
 COLOR_MODE="24bit"
-WIDTH=""
+WIDTH="60"
 HEIGHT=""
 PROP=true
 OUTPUT=""

@@ -46,11 +46,12 @@ i2a logo.jpg --bg-color=#ffffff --fuzz=15 --output=logo.txt
 |---|---|---|
 | `--output=FILE` | — | Save ASCII art to file |
 | `--preview=true` | false | Print ASCII art in terminal |
-| `--width=N` | jp2a default | Width in columns |
-| `--height=N` | jp2a default | Height in lines |
+| `--width=N` | 60 | Width in columns |
+| `--height=N` | auto | Height in lines |
 | `--color-mode=24bit\|8bit\|bw` | 24bit | Color mode |
 | `--bg-color=auto\|#rrggbb\|white\|black` | auto | Background color to remove |
-| `--fuzz=N` | 5 | Background removal tolerance (%) |
+| `--fuzz=N` | 10 | Background removal tolerance (%) |
+| `--prop=true\|false` | true | Keep aspect ratio when only width or height is set |
 
 ## Use with fastfetch
 
