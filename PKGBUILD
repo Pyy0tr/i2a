@@ -8,7 +8,7 @@ url="https://github.com/Pyy0tr/img2term"
 license=('MIT')
 depends=('imagemagick' 'jp2a' 'chafa')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('d5558cd419c8d46bdc958064cb97f963d1ea793866414c025906ec15033512ed')
+sha256sums=('0484da7ca8fbd2e40acb5858088b121fd47ed96c8f6dba1aa89a68f5275c2594')
 
 package() {
     cd "$srcdir/$pkgname-$pkgver"
