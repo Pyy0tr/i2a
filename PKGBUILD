@@ -1,6 +1,6 @@
 # Maintainer: Pyy0tr <pierre45240@gmail.com>
 pkgname=img2term
-pkgver=0.1.0
+pkgver=1.0.0
 pkgrel=1
 pkgdesc="Convert any image into terminal art (ASCII or pixel) with background removal, ready for fastfetch"
 arch=('any')
