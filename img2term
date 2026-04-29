@@ -8,7 +8,7 @@ VERSION="0.1.0"
 FUZZ=10
 BG_COLOR="auto"
 COLOR_MODE="24bit"
-WIDTH="60"
+WIDTH="auto"
 HEIGHT=""
 PROP=true
 OUTPUT=""
@@ -35,8 +35,8 @@ Usage: img2term <image> [options]
 Options:
   --output=FILE         save ASCII art to file
   --preview=true        print ASCII art in terminal (default: false)
-  --width=N             width in columns
-  --height=N            height in lines
+  --width=N|auto        width in columns (auto = terminal width, default: auto)
+  --height=N|auto       height in lines (auto = terminal height)
   --color-mode=MODE     24bit | 8bit | bw  (default: 24bit)
   --bg-color=COLOR      auto | #rrggbb | white | black  (default: auto)
   --fuzz=N              background removal tolerance in %  (default: 5)
@@ -68,7 +68,7 @@ done
 
 # --- validation ---
 check_deps
-[[ -z "$INPUT" ]]      && die "no input file specified. Use: i2a <image> [options]"
+[[ -z "$INPUT" ]]      && die "no input file specified. Use: img2term <image> [options]"
 [[ ! -f "$INPUT" ]]    && die "file not found: $INPUT"
 
 case "$COLOR_MODE" in
@@ -92,6 +92,12 @@ case "$RENDERER" in
 esac
 
 [[ -z "$OUTPUT" && "$PREVIEW" != "true" ]] && die "nothing to do: use --output=FILE and/or --preview=true"
+
+# --- resolve auto dimensions ---
+TERM_COLS="${COLUMNS:-$(tput cols 2>/dev/null || echo 60)}"
+TERM_LINES="${LINES:-$(tput lines 2>/dev/null || echo 24)}"
+[[ "$WIDTH"  == "auto" ]] && WIDTH="$TERM_COLS"
+[[ "$HEIGHT" == "auto" ]] && HEIGHT="$TERM_LINES"
 
 # --- background color detection ---
 if [[ "$BG_COLOR" == "auto" ]]; then

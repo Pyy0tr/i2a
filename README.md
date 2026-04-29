@@ -52,8 +52,8 @@ img2term logo.jpg --bg-color=#ffffff --fuzz=15 --output=logo.txt
 |---|---|---|
 | `--output=FILE` | — | Save to .txt file (ANSI escape codes) |
 | `--preview=true` | false | Print in terminal |
-| `--width=N` | 60 | Width in columns |
-| `--height=N` | auto | Height in lines |
+| `--width=N\|auto` | auto | Width in columns (auto = terminal width) |
+| `--height=N\|auto` | — | Height in lines (auto = terminal height) |
 | `--color-mode=24bit\|8bit\|bw` | 24bit | Color mode |
 | `--bg-color=auto\|#rrggbb\|white\|black` | auto | Background color to remove |
 | `--fuzz=N` | 10 | Background removal tolerance (%) |
