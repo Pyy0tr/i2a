@@ -8,5 +8,8 @@
 # generated ASCII output
 *.txt
 
+# project memory / notes (local only)
+i2aMemory.md
+
 # system
 .DS_Store
