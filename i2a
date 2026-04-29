@@ -87,6 +87,8 @@ trap 'rm -f "$TMP"' EXIT
 magick "$INPUT" \
     -fuzz "${FUZZ}%" \
     -transparent "$BG_COLOR" \
+    -trim +repage \
+    -bordercolor transparent -border 2x1 \
     "$TMP" \
     || die "magick failed to process $INPUT"
 
