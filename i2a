@@ -10,6 +10,7 @@ BG_COLOR="auto"
 COLOR_MODE="24bit"
 WIDTH=""
 HEIGHT=""
+PROP=true
 OUTPUT=""
 PREVIEW=false
 INPUT=""
@@ -34,6 +35,7 @@ Options:
   --color-mode=MODE     24bit | 8bit | bw  (default: 24bit)
   --bg-color=COLOR      auto | #rrggbb | white | black  (default: auto)
   --fuzz=N              background removal tolerance in %  (default: 5)
+  --prop=true|false     keep aspect ratio when only width or height is set (default: true)
   --version             show version
   -h, --help            show this help
 EOF
@@ -49,6 +51,7 @@ for arg in "$@"; do
         --bg-color=*)  BG_COLOR="${arg#*=}" ;;
         --fuzz=*)      FUZZ="${arg#*=}" ;;
         --preview=*)   PREVIEW="${arg#*=}" ;;
+        --prop=*)      PROP="${arg#*=}" ;;
         -h|--help)     usage; exit 0 ;;
         --version)     echo "i2a $VERSION"; exit 0 ;;
         -*)            die "unknown option: $arg" ;;
@@ -69,6 +72,11 @@ esac
 case "$PREVIEW" in
     true|false) ;;
     *) die "invalid --preview: $PREVIEW (use true or false)" ;;
+esac
+
+case "$PROP" in
+    true|false) ;;
+    *) die "invalid --prop: $PROP (use true or false)" ;;
 esac
 
 [[ -z "$OUTPUT" && "$PREVIEW" != "true" ]] && die "nothing to do: use --output=FILE and/or --preview=true"
@@ -92,7 +100,20 @@ magick "$INPUT" \
     "$TMP" \
     || die "magick failed to process $INPUT"
 
-# --- step 2: build jp2a args ---
+# --- step 2: calcul des proportions ---
+if [[ "$PROP" == "true" && -n "$WIDTH" && -z "$HEIGHT" ]]; then
+    IMG_W=$(magick identify -format "%w" "$TMP")
+    IMG_H=$(magick identify -format "%h" "$TMP")
+    HEIGHT=$(( (WIDTH * IMG_H) / (IMG_W * 2) ))
+    [[ "$HEIGHT" -lt 1 ]] && HEIGHT=1
+elif [[ "$PROP" == "true" && -n "$HEIGHT" && -z "$WIDTH" ]]; then
+    IMG_W=$(magick identify -format "%w" "$TMP")
+    IMG_H=$(magick identify -format "%h" "$TMP")
+    WIDTH=$(( (HEIGHT * IMG_W * 2) / IMG_H ))
+    [[ "$WIDTH" -lt 1 ]] && WIDTH=1
+fi
+
+# --- step 3: build jp2a args ---
 JP2A_ARGS=()
 
 case "$COLOR_MODE" in
@@ -104,7 +125,7 @@ esac
 [[ -n "$WIDTH" ]]  && JP2A_ARGS+=(--width="$WIDTH")
 [[ -n "$HEIGHT" ]] && JP2A_ARGS+=(--height="$HEIGHT")
 
-# --- step 3: convert to ASCII ---
+# --- step 4: convert to ASCII ---
 if [[ -n "$OUTPUT" && "$PREVIEW" == "true" ]]; then
     jp2a "${JP2A_ARGS[@]}" "$TMP" | tee "$OUTPUT" || die "jp2a failed"
 elif [[ -n "$OUTPUT" ]]; then
