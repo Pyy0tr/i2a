@@ -66,6 +66,12 @@ for arg in "$@"; do
     esac
 done
 
+# --- resolve auto dimensions ---
+TERM_COLS="${COLUMNS:-$(tput cols 2>/dev/null || echo 60)}"
+TERM_LINES="${LINES:-$(tput lines 2>/dev/null || echo 24)}"
+[[ "$WIDTH"  == "auto" ]] && WIDTH="$TERM_COLS"
+[[ "$HEIGHT" == "auto" ]] && HEIGHT="$TERM_LINES"
+
 # --- validation ---
 check_deps
 [[ -z "$INPUT" ]]      && die "no input file specified. Use: img2term <image> [options]"
@@ -92,12 +98,6 @@ case "$RENDERER" in
 esac
 
 [[ -z "$OUTPUT" && "$PREVIEW" != "true" ]] && die "nothing to do: use --output=FILE and/or --preview=true"
-
-# --- resolve auto dimensions ---
-TERM_COLS="${COLUMNS:-$(tput cols 2>/dev/null || echo 60)}"
-TERM_LINES="${LINES:-$(tput lines 2>/dev/null || echo 24)}"
-[[ "$WIDTH"  == "auto" ]] && WIDTH="$TERM_COLS"
-[[ "$HEIGHT" == "auto" ]] && HEIGHT="$TERM_LINES"
 
 # --- background color detection ---
 if [[ "$BG_COLOR" == "auto" ]]; then
