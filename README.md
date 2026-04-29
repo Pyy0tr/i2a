@@ -11,15 +11,18 @@ image (png/jpg/webp/...) → magick (background removal) → jp2a (ASCII art) �
 ## Dependencies
 
 - [imagemagick](https://imagemagick.org/) — `pacman -S imagemagick`
-- [jp2a](https://github.com/cslarsen/jp2a) — `pacman -S jp2a`
+- [jp2a](https://github.com/cslarsen/jp2a) — `pacman -S jp2a` *(renderer ascii)*
+- [chafa](https://hpjansson.org/chafa/) — `pacman -S chafa` *(renderer pixel)*
 
 ## Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/i2a.git
+git clone https://github.com/Pyy0tr/i2a.git
 cd i2a
 sudo make install
 ```
+
+Dependencies are installed automatically.
 
 ## Usage
 
@@ -38,6 +41,9 @@ i2a logo.webp --width=40 --color-mode=24bit --output=logo.txt
 
 # Manual background color + fuzz
 i2a logo.jpg --bg-color=#ffffff --fuzz=15 --output=logo.txt
+
+# Pixel art renderer (chafa)
+i2a logo.png --renderer=pixel --width=40 --preview=true
 ```
 
 ## Options
@@ -52,6 +58,7 @@ i2a logo.jpg --bg-color=#ffffff --fuzz=15 --output=logo.txt
 | `--bg-color=auto\|#rrggbb\|white\|black` | auto | Background color to remove |
 | `--fuzz=N` | 10 | Background removal tolerance (%) |
 | `--prop=true\|false` | true | Keep aspect ratio when only width or height is set |
+| `--renderer=ascii\|pixel` | ascii | ascii: jp2a — pixel: chafa (Unicode blocks) |
 
 ## Use with fastfetch
 
