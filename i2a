@@ -13,14 +13,19 @@ HEIGHT=""
 PROP=true
 OUTPUT=""
 PREVIEW=false
+RENDERER="ascii"
 INPUT=""
 
 # --- helpers ---
 die() { echo "i2a: error: $*" >&2; exit 1; }
 
 check_deps() {
-    command -v magick  >/dev/null 2>&1 || die "imagemagick not found (pacman -S imagemagick)"
-    command -v jp2a    >/dev/null 2>&1 || die "jp2a not found (pacman -S jp2a)"
+    command -v magick >/dev/null 2>&1 || die "imagemagick not found (pacman -S imagemagick)"
+    if [[ "$RENDERER" == "ascii" ]]; then
+        command -v jp2a >/dev/null 2>&1 || die "jp2a not found (pacman -S jp2a)"
+    else
+        command -v chafa >/dev/null 2>&1 || die "chafa not found (pacman -S chafa)"
+    fi
 }
 
 usage() {
@@ -36,6 +41,7 @@ Options:
   --bg-color=COLOR      auto | #rrggbb | white | black  (default: auto)
   --fuzz=N              background removal tolerance in %  (default: 5)
   --prop=true|false     keep aspect ratio when only width or height is set (default: true)
+  --renderer=MODE       ascii (jp2a) | pixel (chafa)  (default: ascii)
   --version             show version
   -h, --help            show this help
 EOF
@@ -52,6 +58,7 @@ for arg in "$@"; do
         --fuzz=*)      FUZZ="${arg#*=}" ;;
         --preview=*)   PREVIEW="${arg#*=}" ;;
         --prop=*)      PROP="${arg#*=}" ;;
+        --renderer=*)  RENDERER="${arg#*=}" ;;
         -h|--help)     usage; exit 0 ;;
         --version)     echo "i2a $VERSION"; exit 0 ;;
         -*)            die "unknown option: $arg" ;;
@@ -77,6 +84,11 @@ esac
 case "$PROP" in
     true|false) ;;
     *) die "invalid --prop: $PROP (use true or false)" ;;
+esac
+
+case "$RENDERER" in
+    ascii|pixel) ;;
+    *) die "invalid --renderer: $RENDERER (use ascii or pixel)" ;;
 esac
 
 [[ -z "$OUTPUT" && "$PREVIEW" != "true" ]] && die "nothing to do: use --output=FILE and/or --preview=true"
@@ -113,23 +125,42 @@ elif [[ "$PROP" == "true" && -n "$HEIGHT" && -z "$WIDTH" ]]; then
     [[ "$WIDTH" -lt 1 ]] && WIDTH=1
 fi
 
-# --- step 3: build jp2a args ---
-JP2A_ARGS=()
-
-case "$COLOR_MODE" in
-    24bit) JP2A_ARGS+=(--colors) ;;
-    8bit)  JP2A_ARGS+=(--colors) ;;  # jp2a uses terminal colors in both cases
-    bw)    ;;
-esac
-
-[[ -n "$WIDTH" ]]  && JP2A_ARGS+=(--width="$WIDTH")
-[[ -n "$HEIGHT" ]] && JP2A_ARGS+=(--height="$HEIGHT")
-
-# --- step 4: convert to ASCII ---
-if [[ -n "$OUTPUT" && "$PREVIEW" == "true" ]]; then
-    jp2a "${JP2A_ARGS[@]}" "$TMP" | tee "$OUTPUT" || die "jp2a failed"
-elif [[ -n "$OUTPUT" ]]; then
-    jp2a "${JP2A_ARGS[@]}" --output="$OUTPUT" "$TMP" || die "jp2a failed"
+# --- step 3: build renderer args ---
+if [[ "$RENDERER" == "ascii" ]]; then
+    JP2A_ARGS=()
+    case "$COLOR_MODE" in
+        24bit|8bit) JP2A_ARGS+=(--colors) ;;
+        bw) ;;
+    esac
+    [[ -n "$WIDTH" ]]  && JP2A_ARGS+=(--width="$WIDTH")
+    [[ -n "$HEIGHT" ]] && JP2A_ARGS+=(--height="$HEIGHT")
 else
-    jp2a "${JP2A_ARGS[@]}" "$TMP" || die "jp2a failed"
+    CHAFA_ARGS=(--format=symbols)
+    case "$COLOR_MODE" in
+        24bit) CHAFA_ARGS+=(--colors=full) ;;
+        8bit)  CHAFA_ARGS+=(--colors=256) ;;
+        bw)    CHAFA_ARGS+=(--colors=none) ;;
+    esac
+    [[ -n "$WIDTH" && -n "$HEIGHT" ]] && CHAFA_ARGS+=(--size="${WIDTH}x${HEIGHT}")
+    [[ -n "$WIDTH" && -z "$HEIGHT" ]] && CHAFA_ARGS+=(--size="${WIDTH}x")
+    [[ -z "$WIDTH" && -n "$HEIGHT" ]] && CHAFA_ARGS+=(--size="x${HEIGHT}")
+fi
+
+# --- step 4: render ---
+if [[ "$RENDERER" == "ascii" ]]; then
+    if [[ -n "$OUTPUT" && "$PREVIEW" == "true" ]]; then
+        jp2a "${JP2A_ARGS[@]}" "$TMP" | tee "$OUTPUT" || die "jp2a failed"
+    elif [[ -n "$OUTPUT" ]]; then
+        jp2a "${JP2A_ARGS[@]}" --output="$OUTPUT" "$TMP" || die "jp2a failed"
+    else
+        jp2a "${JP2A_ARGS[@]}" "$TMP" || die "jp2a failed"
+    fi
+else
+    if [[ -n "$OUTPUT" && "$PREVIEW" == "true" ]]; then
+        chafa "${CHAFA_ARGS[@]}" "$TMP" | tee "$OUTPUT" || die "chafa failed"
+    elif [[ -n "$OUTPUT" ]]; then
+        chafa "${CHAFA_ARGS[@]}" "$TMP" > "$OUTPUT" || die "chafa failed"
+    else
+        chafa "${CHAFA_ARGS[@]}" "$TMP" || die "chafa failed"
+    fi
 fi
