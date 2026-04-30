@@ -12,6 +12,7 @@ sha256sums=('079236d17e07ac4a074f80b5de87c0ca1a89d52061fe579083450644e0375ede')
 
 package() {
     cd "$srcdir/$pkgname-$pkgver"
-    install -Dm755 img2term "$pkgdir/usr/bin/img2term"
+    install -Dm755 img2term  "$pkgdir/usr/bin/img2term"
+    install -Dm644 LICENSE   "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
     install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
 }

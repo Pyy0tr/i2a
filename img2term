@@ -34,12 +34,12 @@ Usage: img2term <image> [options]
 
 Options:
   --output=FILE         save ASCII art to file
-  --preview=true        print ASCII art in terminal (default: false)
-  --width=N|auto        width in columns (auto = terminal width, default: auto)
+  --preview=true|false  print ASCII art in terminal (default: false)
+  --width=N|auto        width in columns (auto = terminal width, default: 40)
   --height=N|auto       height in lines (auto = terminal height)
   --color-mode=MODE     24bit | 8bit | bw  (default: 24bit)
   --bg-color=COLOR      auto | #rrggbb | white | black  (default: auto)
-  --fuzz=N              background removal tolerance in %  (default: 5)
+  --fuzz=N              background removal tolerance in %  (default: 10)
   --prop=true|false     keep aspect ratio when only width or height is set (default: true)
   --renderer=MODE       ascii (jp2a) | pixel (chafa)  (default: ascii)
   --version             show version
@@ -50,7 +50,7 @@ EOF
 # --- argument parsing ---
 for arg in "$@"; do
     case "$arg" in
-        --output=*)    OUTPUT="${arg#*=}" ;;
+        --output=*)    OUTPUT="${arg#*=}"; OUTPUT="${OUTPUT/#\~/$HOME}" ;;
         --width=*)     WIDTH="${arg#*=}" ;;
         --height=*)    HEIGHT="${arg#*=}" ;;
         --color-mode=*)COLOR_MODE="${arg#*=}" ;;
@@ -118,7 +118,7 @@ magick "$INPUT" \
     "$TMP" \
     || die "magick failed to process $INPUT"
 
-# --- step 2: calcul des proportions ---
+# --- step 2: compute proportional dimensions ---
 if [[ "$PROP" == "true" && -n "$WIDTH" && -z "$HEIGHT" ]]; then
     IMG_W=$(magick identify -format "%w" "$TMP")
     IMG_H=$(magick identify -format "%h" "$TMP")
